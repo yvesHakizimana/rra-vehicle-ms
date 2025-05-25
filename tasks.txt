@@ -1,0 +1,64 @@
+--- All about is The Vehicle Tracking management system
+
+
+They want to be able to track different people who onwned a certain vehicle over a number of year
+from the time it was registered in Rwanda.
+During the vehicle registration these details are required:
+. Chasis Number is like VIN and is 17 digits that's the standard wordlwide.
+. Manufacturer Company
+. manufacturer Year
+. price
+. model name
+eg records (17-char-vin-thing, Toyota, 2005, 13 Million, Toyota RAV4)
+
+The vehicle is linked to owner whose minimum details captured are
+.Owner names
+.Owner nationalId
+.Owner phoneNumber
+.Owner address Let it be the district and also the sector
+
+
+The car will also recieve the plateNumber of the vehicle owner. Owner can have one or even multiple plate numbers
+as s/he buy another car.
+When registered a plate number these details are required
+
+.Owner
+.Plate number
+.issued Date must be in the past because the plate number can't be issued in present or future.
+
+Tasks.
+1. User Management
+- Users have the names, email, phone, nationalId and also password  (roles may be ADMIN, STANDARD)
+- Allow users to sign up
+- Allow users to login into the system after signing up.
+
+2. Vehicle Owners and Plate Numbers.
+- Allow admin to register car owner with above mentioned details.
+- Perform display of all people owning car in the system.
+- Enable search by nationalId, by email, phoneNumber
+- Register a plateNumber under a specifi user.
+- Display plateNumbers number associated with a given owner
+
+3. Vehicle registration
+- Allow admin to register the vehicle with details highlighted above on a specific owner.
+- Allow display of the details.
+
+4. Vehicle Transfer
+- Allow admin to transfer the vehicle from one registered user to another, the admin should capture
+even the amount of money at which the new owner is buying it
+- Every time a transfer is performed the exisiting plateNumber should be marked as available status
+and be given a plate number from the newOwner platenumbers list. A plate number (inuse status)  assigned to a car
+cannot be used until the car is sold or transfered to another owner.
+- Allow admin to search the vehicle by owner's national id, plateNumber, or vehicle chasis number
+
+5. History of Vehicle ownership
+- Allow admin to display the history of how a vehicle identified by either number plate or chasis number
+has been owned from one owner to another.
+- The System should show who owned the vehicle when, how how much owner bought it. for.
+
+
+Technical specifications:
+1. Use postgresql to achieve the desired state with java and also postgresql.
+
+
+
