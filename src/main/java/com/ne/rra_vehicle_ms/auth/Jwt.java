@@ -1,7 +1,7 @@
 package com.ne.rra_vehicle_ms.auth;
 
 
-import com.ne.rra_vehicle_ms.users.Role;
+import com.ne.rra_vehicle_ms.employee.entities.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 

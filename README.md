@@ -4,23 +4,23 @@
 [![Redis](https://img.shields.io/badge/Redis-Latest-red.svg)](https://redis.io/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-A comprehensive vehicle management system developed for the Rwanda Revenue Authority (RRA) to track vehicle registration, ownership transfers, plate number assignments, and complete vehicle history.
+A comprehensive Enterprise Resource Planning (ERP) system for the Government of Rwanda, focusing on Employee Management and Payroll Processing with updated pension rates and deduction calculations.
 
-## 🚗 Overview
+## 💼 Overview
 
-The RRA Vehicle Management System is designed to digitize and streamline vehicle tracking operations in Rwanda. The system manages the complete lifecycle of vehicles from initial registration through multiple ownership transfers, providing a transparent and auditable record of vehicle ownership history.
+The Rwanda Government ERP System is designed to modernize and streamline employee management and payroll processing for government institutions. The system implements the updated pension rates (increased from 3% to 6%) and manages the complete payroll process from employee registration to salary payment notifications.
 
 ### Key Features
 
-- **🔐 User Management**: Secure authentication with role-based access control (ADMIN/STANDARD)
-- **👥 Vehicle Owner Management**: Registration and management of vehicle owners
-- **🏷️ Plate Number System**: Assignment and tracking of vehicle plate numbers
-- **🚙 Vehicle Registration**: Complete vehicle registration with chassis number validation
-- **🔄 Ownership Transfers**: Seamless vehicle transfer between owners
-- **📊 Vehicle History**: Complete ownership history tracking by chassis or plate number
-- **🔍 Advanced Search**: Search capabilities across owners, vehicles, and transfers
-- **📧 Email Notifications**: OTP-based account verification and password reset
-- **🛡️ Security**: JWT-based authentication with rate limiting
+- **👤 Employee Management**: Store and manage employee personal and professional information
+- **💼 Employment Tracking**: Track employee positions, departments, and salary information
+- **💰 Payroll Processing**: Calculate salaries with appropriate deductions and taxes
+- **🧾 Payslip Generation**: Generate monthly payslips for employees
+- **📱 Notification System**: Send salary payment notifications to employees
+- **🔐 Role-Based Access Control**: Different permissions for Admins, Managers, and Employees
+- **📊 Deduction Management**: Configurable deduction rates for taxes, pension, etc.
+- **📧 Email Notifications**: Automated salary payment notifications
+- **🛡️ Security**: JWT-based authentication with role-based authorization
 - **📖 API Documentation**: Comprehensive Swagger/OpenAPI documentation
 
 ## 🏗️ Architecture
@@ -39,15 +39,19 @@ The RRA Vehicle Management System is designed to digitize and streamline vehicle
 - **ORM**: Hibernate/JPA
 - **Mapping**: MapStruct
 - **Validation**: Jakarta Bean Validation
+- **Database Migrations**: Flyway
 
 ### Security Features
 
 - JWT-based authentication and authorization
-- Role-based access control (RBAC)
+- Role-based access control (RBAC) with three roles:
+  - **ROLE_ADMIN**: Can approve salary payments
+  - **ROLE_MANAGER**: Can process salary and manage employee details
+  - **ROLE_EMPLOYEE**: Can view personal details and payslips
 - Rate limiting for authentication endpoints
-- OTP verification for account activation
-- Password reset with secure tokens
-- Custom validation annotations
+- Password encryption with BCrypt
+- Secure email notifications
+- Input validation to prevent injection attacks
 
 ## 📋 Prerequisites
 
@@ -144,58 +148,97 @@ java -jar target/rra-ms-0.0.1-SNAPSHOT.jar
 | `PATCH` | `/auth/reset-password` | Reset password with OTP | ✅ |
 | `POST` | `/auth/refresh` | Refresh access token | ✅ |
 
-### Vehicle Management Endpoints
+### Employee Management Endpoints
 
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|---------|
-| `POST` | `/api/v1/vehicle-owners` | Register vehicle owner | ADMIN |
-| `GET` | `/api/v1/vehicle-owners` | Get all owners (paginated) | ADMIN |
-| `GET` | `/api/v1/vehicle-owners/{id}` | Get owner by ID | ADMIN |
-| `GET` | `/api/v1/vehicle-owners/search` | Search owners | ADMIN |
-| `POST` | `/api/v1/plate-numbers/owner/{ownerId}` | Register plate number | ADMIN |
-| `GET` | `/api/v1/plate-numbers/owner/{ownerId}` | Get owner's plate numbers | USER |
-| `POST` | `/api/v1/vehicles/owner/{ownerId}/plate-number/{plateId}` | Register vehicle | ADMIN |
-| `GET` | `/api/v1/vehicles` | Get all vehicles | USER |
-| `GET` | `/api/v1/vehicles/{id}` | Get vehicle by ID | USER |
-| `GET` | `/api/v1/vehicles/owner/{ownerId}` | Get owner's vehicles | USER |
+| `POST` | `/api/v1/employees` | Create new employee | MANAGER |
+| `GET` | `/api/v1/employees` | Get all employees | ADMIN, MANAGER |
+| `GET` | `/api/v1/employees/{id}` | Get employee by ID | ADMIN, MANAGER |
+| `GET` | `/api/v1/employees/email/{email}` | Get employee by email | ADMIN, MANAGER |
+| `GET` | `/api/v1/employees/code/{code}` | Get employee by code | ADMIN, MANAGER |
+| `GET` | `/api/v1/employees/status/{status}` | Get employees by status | ADMIN, MANAGER |
+| `PUT` | `/api/v1/employees/{id}` | Update employee | MANAGER |
+| `DELETE` | `/api/v1/employees/{id}` | Delete employee | MANAGER |
+| `PATCH` | `/api/v1/employees/{id}/status` | Update employee status | MANAGER |
+| `PATCH` | `/api/v1/employees/{id}/password` | Update employee password | MANAGER |
 
-### Transfer & History Endpoints
+### Employment Management Endpoints
 
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|---------|
-| `POST` | `/api/v1/vehicle-transfers/vehicle/{vehicleId}/owner/{newOwnerId}/plate-number/{plateId}` | Transfer vehicle | ADMIN |
-| `GET` | `/api/v1/vehicle-transfers/history/chassis/{chassisNumber}` | Get vehicle history by chassis | ADMIN |
-| `GET` | `/api/v1/vehicle-transfers/history/plate/{plateNumber}` | Get vehicle history by plate | ADMIN |
-| `GET` | `/api/v1/vehicle-transfers/history/owner/{ownerId}` | Get owner transfer history | ADMIN |
-| `GET` | `/api/v1/vehicle-transfers` | Get all transfers | USER |
+| `POST` | `/api/v1/employments` | Create new employment | MANAGER |
+| `GET` | `/api/v1/employments` | Get all employments | ADMIN, MANAGER |
+| `GET` | `/api/v1/employments/{id}` | Get employment by ID | ADMIN, MANAGER |
+| `GET` | `/api/v1/employments/code/{code}` | Get employment by code | ADMIN, MANAGER |
+| `GET` | `/api/v1/employments/employee/{employeeId}` | Get employments by employee | ADMIN, MANAGER, EMPLOYEE |
+| `GET` | `/api/v1/employments/status/{status}` | Get employments by status | ADMIN, MANAGER |
+| `GET` | `/api/v1/employments/employee/{employeeId}/current` | Get current employment | ADMIN, MANAGER, EMPLOYEE |
+| `PUT` | `/api/v1/employments/{id}` | Update employment | MANAGER |
+| `DELETE` | `/api/v1/employments/{id}` | Delete employment | MANAGER |
+| `PATCH` | `/api/v1/employments/{id}/status` | Update employment status | MANAGER |
+
+### Deduction & Payroll Management Endpoints
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| `POST` | `/api/v1/deductions` | Create new deduction | MANAGER |
+| `GET` | `/api/v1/deductions` | Get all deductions | ALL |
+| `GET` | `/api/v1/deductions/{id}` | Get deduction by ID | ADMIN, MANAGER |
+| `PUT` | `/api/v1/deductions/{id}` | Update deduction | MANAGER |
+| `DELETE` | `/api/v1/deductions/{id}` | Delete deduction | MANAGER |
+| `POST` | `/api/v1/deductions/initialize` | Initialize default deductions | MANAGER |
+| `POST` | `/api/v1/payroll/process/month/{month}/year/{year}` | Process payroll | MANAGER |
+| `POST` | `/api/v1/payroll/approve/month/{month}/year/{year}` | Approve payroll | ADMIN |
+| `GET` | `/api/v1/payslips/employee/{employeeId}` | Get employee payslips | ALL |
+| `GET` | `/api/v1/payslip/employee/{employeeId}/month/{month}/year/{year}` | Get specific payslip | ALL |
 
 ## 🏢 Business Logic
 
-### Vehicle Registration Process
+### Employee Management Process
 
-1. **Owner Registration**: Admin registers vehicle owner with personal details
-2. **Plate Number Assignment**: Admin assigns plate number(s) to owner
-3. **Vehicle Registration**: Admin registers vehicle linking owner and plate number
-4. **Ownership Transfer**: Admin can transfer vehicle to new owner with new plate number
+1. **Employee Registration**: Manager registers employee with personal and professional details
+2. **Employment Assignment**: Manager creates employment record with department, position, and salary
+3. **Deduction Configuration**: System applies standard deductions or custom configurations
+4. **Payroll Processing**: Manager processes payroll for a specific month and year
+5. **Payroll Approval**: Admin approves processed payroll for payment
+6. **Notification**: System sends payment notifications to employees
 
-### Vehicle History Tracking
+### Payroll Calculation
 
-The system maintains complete ownership history:
-- **Initial Registration**: Records first owner and purchase price
-- **Ownership Transfers**: Tracks all subsequent owners with transfer amounts
-- **Plate Number Changes**: Records plate number changes during transfers
-- **Timeline View**: Chronological ownership history with ownership periods
+The system calculates employee compensation based on the following formula:
+
+1. **Gross Salary Calculation**:
+   ```
+   Gross Salary = Base Salary + Housing Allowance + Transport Allowance
+   Housing Allowance = Base Salary * 14%
+   Transport Allowance = Base Salary * 14%
+   ```
+
+2. **Deductions Calculation**:
+   ```
+   Employee Tax = Base Salary * 30%
+   Pension = Base Salary * 6%
+   Medical Insurance = Base Salary * 5%
+   Other Deductions = Base Salary * 5%
+   ```
+
+3. **Net Salary Calculation**:
+   ```
+   Net Salary = Gross Salary - (Employee Tax + Pension + Medical Insurance + Other Deductions)
+   ```
 
 ### Security Model
 
 - **Public Endpoints**: Registration, login, password reset
-- **Authenticated Endpoints**: Vehicle viewing, owner information
-- **Admin-Only Endpoints**: Registration operations, transfers, complete history access
+- **Employee Access**: View personal details, employment history, and payslips
+- **Manager Access**: Employee management, employment records, payroll processing
+- **Admin Access**: Payroll approval, system configuration
 
 ## 🗂️ Project Structure
 
 ```
-rra-vehicles-ms/
+rw-gov-erp/
 ├── src/main/java/com/ne/rra_vehicle_ms/
 │   ├── auth/                          # Authentication & security
 │   │   ├── dtos/                      # Authentication DTOs
@@ -206,42 +249,60 @@ rra-vehicles-ms/
 │   ├── commons/                       # Shared components
 │   │   ├── dtos/                      # Common DTOs (ApiResponse, PageResponse)
 │   │   ├── exceptions/                # Custom exceptions
-│   │   ├── generators/                # Custom ID generators
+│   │   ├── generators/                # Custom ID generators (Base36Generator)
 │   │   ├── validations/               # Custom validation annotations
 │   │   └── GlobalExceptionHandler.java
 │   ├── config/                        # Configuration classes
 │   │   ├── OpenApiConfig.java        # Swagger configuration
 │   │   ├── RedisConfig.java          # Redis configuration
+│   │   ├── EmailConfig.java          # Email configuration
 │   │   └── ThymeleafConfig.java      # Email template configuration
 │   ├── email/                         # Email service
 │   ├── users/                         # User management
-│   ├── vehicle_owners/                # Vehicle owner management
-│   │   ├── dtos/                      # Owner DTOs
+│   ├── employee/                      # Employee management
+│   │   ├── controllers/               # Employee controllers
+│   │   ├── dtos/                      # Employee DTOs
+│   │   ├── entities/                  # Employee entities
 │   │   ├── mappers/                   # MapStruct mappers
-│   │   ├── VehicleOwner.java         # Owner entity
-│   │   ├── VehicleOwnerController.java
-│   │   ├── VehicleOwnerService.java
-│   │   └── VehicleOwnerRepository.java
-│   ├── plate_numbers/                 # Plate number management
-│   ├── vehicles/                      # Vehicle management
-│   │   ├── dtos/                      # Vehicle DTOs
+│   │   ├── repositories/              # Employee repositories
+│   │   └── services/                  # Employee services
+│   ├── employment/                    # Employment management
+│   │   ├── controllers/               # Employment controllers
+│   │   ├── dtos/                      # Employment DTOs
+│   │   ├── entities/                  # Employment entities
 │   │   ├── mappers/                   # MapStruct mappers
-│   │   ├── Vehicle.java              # Vehicle entity
-│   │   ├── VehicleController.java
-│   │   ├── VehicleService.java
-│   │   └── VehicleRepository.java
-│   ├── vehicle_history/               # Transfer & history management
-│   │   ├── dtos/                      # Transfer DTOs
+│   │   ├── repositories/              # Employment repositories
+│   │   └── services/                  # Employment services
+│   ├── deductions/                    # Deduction management
+│   │   ├── controllers/               # Deduction controllers
+│   │   ├── dtos/                      # Deduction DTOs
+│   │   ├── entities/                  # Deduction entities
 │   │   ├── mappers/                   # MapStruct mappers
-│   │   ├── VehicleTransfer.java      # Transfer entity
-│   │   ├── VehicleTransferController.java
-│   │   ├── VehicleTransferService.java
-│   │   └── repository/
-│   └── RRAVehicleMsApplication.java   # Main application class
+│   │   ├── repositories/              # Deduction repositories
+│   │   └── services/                  # Deduction services
+│   ├── payslip/                       # Payslip management
+│   │   ├── controllers/               # Payslip controllers
+│   │   ├── dtos/                      # Payslip DTOs
+│   │   ├── entities/                  # Payslip entities
+│   │   ├── mappers/                   # MapStruct mappers
+│   │   ├── repositories/              # Payslip repositories
+│   │   └── services/                  # Payslip services
+│   ├── message/                       # Message management
+│   │   ├── controllers/               # Message controllers
+│   │   ├── dtos/                      # Message DTOs
+│   │   ├── entities/                  # Message entities
+│   │   ├── mappers/                   # MapStruct mappers
+│   │   ├── repositories/              # Message repositories
+│   │   └── services/                  # Message services
+│   └── RwGovErpApplication.java       # Main application class
 ├── src/main/resources/
+│   ├── db/migration/                  # Flyway database migrations
 │   ├── templates/                     # Thymeleaf email templates
 │   ├── application.properties         # Main configuration
 │   └── application-dev.properties     # Development configuration
+├── docs/                              # Documentation
+│   ├── DESIGN.md                      # Design documentation
+│   └── ERD.md                         # Entity Relationship Diagram
 ├── src/test/                          # Test classes
 ├── pom.xml                           # Maven configuration
 └── README.md                         # This file
@@ -498,21 +559,21 @@ For support and questions:
 
 ### Upcoming Features
 
-- [ ] Mobile API for vehicle registration
-- [ ] Vehicle inspection management
-- [ ] Integration with national ID system
-- [ ] Real-time notifications
-- [ ] Advanced analytics dashboard
-- [ ] Bulk import/export functionality
+- [ ] Mobile application for employees to view payslips
+- [ ] Advanced reporting and analytics dashboard
+- [ ] Integration with banking systems for direct deposits
+- [ ] Tax filing automation
+- [ ] Performance management module
+- [ ] Leave management integration
 - [ ] Multi-language support (Kinyarwanda, French, English)
 
 ### Version History
 
 - **v1.0.0** - Initial release with core functionality
-- **v1.1.0** - Enhanced security and validation (planned)
-- **v2.0.0** - Mobile API and advanced features (planned)
+- **v1.1.0** - Enhanced reporting and analytics (planned)
+- **v2.0.0** - Mobile application and banking integration (planned)
 
 ---
 
-**Rwanda Revenue Authority - Vehicle Management System**  
-*Streamlining vehicle registration and ownership tracking in Rwanda*
+**Rwanda Government - Enterprise Resource Planning System**  
+*Modernizing employee management and payroll processing for Rwanda's government institutions*

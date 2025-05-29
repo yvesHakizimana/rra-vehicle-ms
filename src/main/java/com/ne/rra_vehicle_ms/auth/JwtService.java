@@ -2,7 +2,7 @@ package com.ne.rra_vehicle_ms.auth;
 
 
 import com.ne.rra_vehicle_ms.auth.exceptions.InvalidJwtException;
-import com.ne.rra_vehicle_ms.users.User;
+import com.ne.rra_vehicle_ms.employee.entities.Employee;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -20,20 +20,20 @@ import java.util.Date;
 public class JwtService {
     private final JwtConfig config;
 
-    Jwt generateAccessToken(User user){
-        return generateToken(user, config.getAccessTokenExpiration());
+    Jwt generateAccessToken(Employee employee){
+        return generateToken(employee, config.getAccessTokenExpiration());
     }
 
-    Jwt generateRefreshToken(User user){
-        return generateToken(user, config.getRefreshTokenExpiration());
+    Jwt generateRefreshToken(Employee employee){
+        return generateToken(employee, config.getRefreshTokenExpiration());
     }
 
-    private Jwt generateToken(User user, long tokenExpiration){
+    private Jwt generateToken(Employee employee, long tokenExpiration){
         var claims = Jwts.claims()
-                .subject(user.getId().toString())
-                .add("email", user.getEmail())
-                .add("phoneNumber", user.getPhoneNumber())
-                .add("role", user.getRole())
+                .subject(employee.getId().toString())
+                .add("email", employee.getEmail())
+                .add("phoneNumber", employee.getMobile())
+                .add("role", employee.getRole())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 1000 * tokenExpiration))
                 .build();

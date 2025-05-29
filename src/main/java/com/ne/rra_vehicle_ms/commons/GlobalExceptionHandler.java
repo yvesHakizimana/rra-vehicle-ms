@@ -4,6 +4,7 @@ import com.ne.rra_vehicle_ms.commons.exceptions.BadRequestException;
 import com.ne.rra_vehicle_ms.commons.exceptions.NotFoundException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.mail.MessagingException;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -85,6 +86,13 @@ public class GlobalExceptionHandler {
         var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
     }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    ResponseEntity<ProblemDetail> handleEntityNotFoundException(EntityNotFoundException ex) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
+    }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleGenericException(Exception ex){

@@ -12,7 +12,6 @@ import org.hibernate.validator.constraints.UUID;
 public record RegisterRequestDto(
         @NotBlank(message = "First name is required")
         @Size(min = 3, max = 50, message = "First name must be between 2 and 50 characters long")
-        @UUID
         String firstName,
 
         @NotBlank(message = "Last name is required")

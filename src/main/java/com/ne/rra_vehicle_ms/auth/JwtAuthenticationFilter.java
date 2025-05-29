@@ -32,7 +32,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         // Skip auth endpoints
-        if (request.getServletPath().startsWith("/auth/login")) {
+        if (
+                request.getServletPath().startsWith("/auth/login") ||
+                        request.getServletPath().startsWith("/auth/refresh")
+
+        ) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -59,7 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(
                             jwt.getUserId(),
                             null,
-                            Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + jwt.getRole()))
+                            Collections.singletonList(new SimpleGrantedAuthority(jwt.getRole().toString()))
                     );
 
             authentication.setDetails(
