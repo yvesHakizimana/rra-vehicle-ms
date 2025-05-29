@@ -4,18 +4,17 @@ import com.ne.rra_vehicle_ms.commons.exceptions.BadRequestException;
 import com.ne.rra_vehicle_ms.employee.entities.Employee;
 import com.ne.rra_vehicle_ms.employee.services.EmployeeService;
 import com.ne.rra_vehicle_ms.employment.dtos.EmploymentRequestDto;
+import com.ne.rra_vehicle_ms.employment.dtos.EmploymentResponseDto;
 import com.ne.rra_vehicle_ms.employment.entities.Employment;
 import com.ne.rra_vehicle_ms.employment.entities.EmploymentStatus;
 import com.ne.rra_vehicle_ms.employment.mappers.EmploymentMapper;
 import com.ne.rra_vehicle_ms.employment.repositories.EmploymentRepository;
-import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -26,12 +25,9 @@ public class EmploymentService {
     private final EmploymentMapper employmentMapper;
 
     @Transactional
-    public Employment createEmployment(EmploymentRequestDto employmentRequestDto) {
-        // Verify that the employee exists
-        Employee employee = employeeService.getEmployeeById(employmentRequestDto.employeeId());
-        if (employee == null) {
-            throw new EntityNotFoundException("Employee with id " + employmentRequestDto.employeeId() + " not found");
-        }
+    public EmploymentResponseDto createEmployment(EmploymentRequestDto employmentRequestDto) {
+        // Verify that the employee exists - get internal entity for validation
+        Employee employee = getEmployeeEntityById(employmentRequestDto.employeeId());
 
         // Check if employee already has an active employment
         List<Employment> activeEmployments = employmentRepository.findAllByEmployeeAndStatusOrderByJoiningDateDesc(employee, EmploymentStatus.ACTIVE);
@@ -40,72 +36,106 @@ public class EmploymentService {
         }
 
         Employment employment = employmentMapper.toEntity(employmentRequestDto);
-
-        return employmentRepository.save(employment);
+        employment.setEmployee(employee); // Set the employee entity
+        
+        Employment savedEmployment = employmentRepository.save(employment);
+        return employmentMapper.toResponseDto(savedEmployment);
     }
 
     @Transactional(readOnly = true)
-    public Employment getEmploymentById(UUID id) {
-        return employmentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Employment with id " + id + " not found"));
+    public EmploymentResponseDto getEmploymentById(UUID id) {
+        Employment employment = getEmploymentEntityById(id);
+        return employmentMapper.toResponseDto(employment);
     }
 
     @Transactional(readOnly = true)
-    public Employment getEmploymentByCode(String code) {
-        return employmentRepository.findByCode(code)
+    public EmploymentResponseDto getEmploymentByCode(String code) {
+        Employment employment = employmentRepository.findByCode(code)
                 .orElseThrow(() -> new EntityNotFoundException("Employment with code " + code + " not found"));
+        return employmentMapper.toResponseDto(employment);
     }
 
     @Transactional(readOnly = true)
-    public List<Employment> getAllEmployments() {
-        return employmentRepository.findAll();
+    public List<EmploymentResponseDto> getAllEmployments() {
+        List<Employment> employments = employmentRepository.findAll();
+        return employmentMapper.toResponseDtoList(employments);
     }
 
     @Transactional(readOnly = true)
-    public List<Employment> getEmploymentsByEmployee(UUID employeeId) {
-        Employee employee = employeeService.getEmployeeById(employeeId);
-        return employmentRepository.findByEmployee(employee);
+    public List<EmploymentResponseDto> getEmploymentsByEmployee(UUID employeeId) {
+        Employee employee = getEmployeeEntityById(employeeId);
+        List<Employment> employments = employmentRepository.findByEmployee(employee);
+        return employmentMapper.toResponseDtoList(employments);
     }
 
     @Transactional(readOnly = true)
-    public List<Employment> getEmploymentsByStatus(EmploymentStatus status) {
-        return employmentRepository.findByStatus(status);
+    public List<EmploymentResponseDto> getEmploymentsByStatus(EmploymentStatus status) {
+        List<Employment> employments = employmentRepository.findByStatus(status);
+        return employmentMapper.toResponseDtoList(employments);
     }
 
     @Transactional(readOnly = true)
-    public Employment getCurrentEmployment(UUID employeeId) {
-        Employee employee = employeeService.getEmployeeById(employeeId);
+    public EmploymentResponseDto getCurrentEmployment(UUID employeeId) {
+        Employee employee = getEmployeeEntityById(employeeId);
         List<Employment> activeEmployments = employmentRepository.findAllByEmployeeAndStatusOrderByJoiningDateDesc(employee, EmploymentStatus.ACTIVE);
         if (activeEmployments.isEmpty()) {
             throw new EntityNotFoundException("No active employment found for employee with id " + employeeId);
         }
-        return activeEmployments.get(0); // Return the most recent one (due to OrderByJoiningDateDesc)
+        Employment currentEmployment = activeEmployments.get(0); // Return the most recent one
+        return employmentMapper.toResponseDto(currentEmployment);
     }
 
     @Transactional
-    public Employment updateEmployment(UUID id, Employment employmentDetails) {
-        Employment employment = getEmploymentById(id);
+    public EmploymentResponseDto updateEmployment(UUID id, EmploymentRequestDto employmentRequestDto) {
+        Employment employment = getEmploymentEntityById(id);
+        
+        // Verify that the employee exists if employeeId is being changed
+        if (!employment.getEmployee().getId().equals(employmentRequestDto.employeeId())) {
+            Employee newEmployee = getEmployeeEntityById(employmentRequestDto.employeeId());
+            employment.setEmployee(newEmployee);
+        }
 
         // Update fields
-        employment.setDepartment(employmentDetails.getDepartment());
-        employment.setPosition(employmentDetails.getPosition());
-        employment.setBaseSalary(employmentDetails.getBaseSalary());
-        employment.setStatus(employmentDetails.getStatus());
-        employment.setJoiningDate(employmentDetails.getJoiningDate());
+        employment.setDepartment(employmentRequestDto.department());
+        employment.setPosition(employmentRequestDto.position());
+        employment.setBaseSalary(employmentRequestDto.baseSalary());
+        employment.setStatus(employmentRequestDto.status());
+        employment.setJoiningDate(employmentRequestDto.joiningDate());
 
-        return employmentRepository.save(employment);
+        Employment updatedEmployment = employmentRepository.save(employment);
+        return employmentMapper.toResponseDto(updatedEmployment);
     }
 
     @Transactional
     public void deleteEmployment(UUID id) {
-        Employment employment = getEmploymentById(id);
+        Employment employment = getEmploymentEntityById(id);
         employmentRepository.delete(employment);
     }
 
     @Transactional
-    public Employment updateEmploymentStatus(UUID id, EmploymentStatus status) {
-        Employment employment = getEmploymentById(id);
+    public EmploymentResponseDto updateEmploymentStatus(UUID id, EmploymentStatus status) {
+        Employment employment = getEmploymentEntityById(id);
         employment.setStatus(status);
-        return employmentRepository.save(employment);
+        Employment updatedEmployment = employmentRepository.save(employment);
+        return employmentMapper.toResponseDto(updatedEmployment);
+    }
+
+    // Helper methods for internal operations
+    private Employment getEmploymentEntityById(UUID id) {
+        return employmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Employment with id " + id + " not found"));
+    }
+    
+    private Employee getEmployeeEntityById(UUID employeeId) {
+        // Since EmployeeService now returns DTOs, we need a way to get the entity
+        // You might need to add a method in EmployeeService to get entity by ID
+        // For now, we'll use the existing method and handle the conversion
+        try {
+            // This assumes you have a method to get employee entity by ID
+            // You may need to add this method to EmployeeService
+            return employeeService.getEmployeeEntityById(employeeId);
+        } catch (Exception e) {
+            throw new EntityNotFoundException("Employee with id " + employeeId + " not found");
+        }
     }
 }

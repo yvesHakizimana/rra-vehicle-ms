@@ -1,6 +1,7 @@
 package com.ne.rra_vehicle_ms.employee.services;
 
 import com.ne.rra_vehicle_ms.employee.dtos.EmployeeRequestDto;
+import com.ne.rra_vehicle_ms.employee.dtos.EmployeeResponseDto;
 import com.ne.rra_vehicle_ms.employee.entities.Employee;
 import com.ne.rra_vehicle_ms.employee.entities.EmployeeStatus;
 import com.ne.rra_vehicle_ms.employee.entities.Role;
@@ -61,7 +62,7 @@ public class EmployeeService {
 
 
     @Transactional
-    public Employee createEmployee(EmployeeRequestDto employeeDto) {
+    public EmployeeResponseDto createEmployee(EmployeeRequestDto employeeDto) {
         // Check if employee with same email or mobile already exists
         if (employeeRepository.existsByEmail(employeeDto.email())) {
             throw new EntityExistsException("Employee with email " + employeeDto.email() + " already exists");
@@ -73,83 +74,98 @@ public class EmployeeService {
         Employee employee = employeeMapper.toEntity(employeeDto);
         employee.setPassword(passwordEncoder.encode("emp123"));
         employee.setRole(Role.ROLE_EMPLOYEE);
-        return employeeRepository.save(employee);
+        Employee savedEmployee = employeeRepository.save(employee);
+        return employeeMapper.toResponseDto(savedEmployee);
     }
+
     @Transactional(readOnly = true)
-    public Employee getEmployeeById(UUID id) {
-        return employeeRepository.findById(id)
+    public EmployeeResponseDto getEmployeeById(UUID id) {
+        Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Employee with id " + id + " not found"));
+        return employeeMapper.toResponseDto(employee);
     }
 
     @Transactional(readOnly = true)
-    public Employee getEmployeeByEmail(String email) {
-        return employeeRepository.findByEmail(email)
+    public EmployeeResponseDto getEmployeeByEmail(String email) {
+        Employee employee = employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Employee with email " + email + " not found"));
+        return employeeMapper.toResponseDto(employee);
     }
 
     @Transactional(readOnly = true)
-    public Employee getEmployeeByCode(String code) {
-        return employeeRepository.findByCode(code)
+    public EmployeeResponseDto getEmployeeByCode(String code) {
+        Employee employee = employeeRepository.findByCode(code)
                 .orElseThrow(() -> new EntityNotFoundException("Employee with code " + code + " not found"));
+        return employeeMapper.toResponseDto(employee);
     }
 
     @Transactional(readOnly = true)
-    public List<Employee> getAllEmployees() {
-        return employeeRepository.findAll();
+    public List<EmployeeResponseDto> getAllEmployees() {
+        List<Employee> employees = employeeRepository.findAll();
+        return employeeMapper.toResponseDtoList(employees);
     }
 
     @Transactional(readOnly = true)
-    public List<Employee> getEmployeesByStatus(EmployeeStatus status) {
-        return employeeRepository.findByStatus(status);
+    public List<EmployeeResponseDto> getEmployeesByStatus(EmployeeStatus status) {
+        List<Employee> employees = employeeRepository.findByStatus(status);
+        return employeeMapper.toResponseDtoList(employees);
     }
 
     @Transactional
-    public Employee updateEmployee(UUID id, Employee employeeDetails) {
-        Employee employee = getEmployeeById(id);
+    public EmployeeResponseDto updateEmployee(UUID id, EmployeeRequestDto employeeDto) {
+        Employee employee = getEmployeeEntityById(id);
         
         // Update fields
-        employee.setFirstName(employeeDetails.getFirstName());
-        employee.setLastName(employeeDetails.getLastName());
-        employee.setMobile(employeeDetails.getMobile());
-        employee.setDateOfBirth(employeeDetails.getDateOfBirth());
-        employee.setStatus(employeeDetails.getStatus());
+        employee.setFirstName(employeeDto.firstName());
+        employee.setLastName(employeeDto.lastName());
+        employee.setMobile(employeeDto.mobile());
+        employee.setDateOfBirth(employeeDto.dateOfBirth());
         
         // Only update email if it's different and not already taken
-        if (!employee.getEmail().equals(employeeDetails.getEmail())) {
-            if (employeeRepository.existsByEmail(employeeDetails.getEmail())) {
-                throw new EntityExistsException("Email " + employeeDetails.getEmail() + " is already in use");
+        if (!employee.getEmail().equals(employeeDto.email())) {
+            if (employeeRepository.existsByEmail(employeeDto.email())) {
+                throw new EntityExistsException("Email " + employeeDto.email() + " is already in use");
             }
-            employee.setEmail(employeeDetails.getEmail());
+            employee.setEmail(employeeDto.email());
         }
         
         // Only update mobile if it's different and not already taken
-        if (!employee.getMobile().equals(employeeDetails.getMobile())) {
-            if (employeeRepository.existsByMobile(employeeDetails.getMobile())) {
-                throw new EntityExistsException("Mobile " + employeeDetails.getMobile() + " is already in use");
+        if (!employee.getMobile().equals(employeeDto.mobile())) {
+            if (employeeRepository.existsByMobile(employeeDto.mobile())) {
+                throw new EntityExistsException("Mobile " + employeeDto.mobile() + " is already in use");
             }
-            employee.setMobile(employeeDetails.getMobile());
+            employee.setMobile(employeeDto.mobile());
         }
         
-        return employeeRepository.save(employee);
+        Employee updatedEmployee = employeeRepository.save(employee);
+        return employeeMapper.toResponseDto(updatedEmployee);
     }
 
     @Transactional
     public void deleteEmployee(UUID id) {
-        Employee employee = getEmployeeById(id);
+        Employee employee = getEmployeeEntityById(id);
         employeeRepository.delete(employee);
     }
 
     @Transactional
-    public Employee updateEmployeeStatus(UUID id, EmployeeStatus status) {
-        Employee employee = getEmployeeById(id);
+    public EmployeeResponseDto updateEmployeeStatus(UUID id, EmployeeStatus status) {
+        Employee employee = getEmployeeEntityById(id);
         employee.setStatus(status);
-        return employeeRepository.save(employee);
+        Employee updatedEmployee = employeeRepository.save(employee);
+        return employeeMapper.toResponseDto(updatedEmployee);
     }
 
     @Transactional
-    public Employee updateEmployeePassword(UUID id, String newPassword) {
-        Employee employee = getEmployeeById(id);
+    public EmployeeResponseDto updateEmployeePassword(UUID id, String newPassword) {
+        Employee employee = getEmployeeEntityById(id);
         employee.setPassword(passwordEncoder.encode(newPassword));
-        return employeeRepository.save(employee);
+        Employee updatedEmployee = employeeRepository.save(employee);
+        return employeeMapper.toResponseDto(updatedEmployee);
+    }
+
+    // Add this public method to support other services that need the entity
+    public Employee getEmployeeEntityById(UUID id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Employee with id " + id + " not found"));
     }
 }
